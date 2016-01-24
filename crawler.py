@@ -6,6 +6,7 @@
 import urllib2 as ul2
 import re
 import csv
+import datetime
 from lxml import etree
 
 def main():
@@ -14,6 +15,7 @@ def main():
   end_page_num = 152
   species = list()
   places = list()
+  time = list()
   
   req = ul2.Request(url)
   response =  ul2.urlopen(req)
@@ -23,13 +25,19 @@ def main():
   
   # iterate through all pages
   for data in page.xpath("//div[@class='frog-sound-list']"):
-    for place, name in zip(data.xpath(u"//h3/text()"),data.xpath(u"//p/text()")):
+    for info, name in zip(data.xpath(u"//h3/text()"),data.xpath(u"//p/text()")):
       name = re.sub('[\n\t, ]', '', name)
+      time_info = datetime.datetime.strptime(info[:19], '%Y-%m-%d %H:%M:%S')
+      place_info = re.sub('[, ]', '', info[21:-3])
+      #print time_info.date(), time_info.time(), place_info
+  
+      time.append(time_info)
       species.append(name)
-      places.append(place)
-
+      places.append(place_info)
+  '''
   for ele1, ele2 in zip(species, places):
     # write to a csv file
     print ele1, ele2
+  '''
 if __name__ == '__main__':
   main()
