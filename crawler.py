@@ -7,15 +7,15 @@ import urllib2 as ul2
 import re
 import csv
 import datetime
+import pandas as pd
 from lxml import etree
 
 def main():
   url = 'http://iesn.tfri.gov.tw/forestDW/Frog/Listen?frogSpeciesId=&siteId=02&pointId=&startDate=&endDate=&p=1'
   start_page_num = 1
   end_page_num = 152
-  species = list()
-  places = list()
-  time = list()
+  frog = dict()
+  frog_list = list()
   
   req = ul2.Request(url)
   response =  ul2.urlopen(req)
@@ -23,21 +23,31 @@ def main():
 
   page = etree.HTML(html)
   
-  # iterate through all pages
-  for data in page.xpath("//div[@class='frog-sound-list']"):
-    for info, name in zip(data.xpath(u"//h3/text()"),data.xpath(u"//p/text()")):
-      name = re.sub('[\n\t, ]', '', name)
-      time_info = datetime.datetime.strptime(info[:19], '%Y-%m-%d %H:%M:%S')
-      place_info = re.sub('[, ]', '', info[21:-3])
-      #print time_info.date(), time_info.time(), place_info
+  species = page.xpath(u"//div[@class='frog-sound-item']//p/text()")
+  info = page.xpath(u"//div[@class='frog-sound-item']//h3/text()")
+  audio_source = page.xpath(u"//div[@class='frog-sound-item']//a[@class='k-button'][2]/@href")
   
-      time.append(time_info)
-      species.append(name)
-      places.append(place_info)
-  '''
-  for ele1, ele2 in zip(species, places):
-    # write to a csv file
-    print ele1, ele2
-  '''
+  for idx in range(0, len(species)):
+    # if more than 2 frog
+    names = re.sub('[\r\n\t ]', '', species[idx])
+    names = names.split(',')
+    
+    for jdx in range(0, len(names)):
+      frog = {
+        'specie': re.sub('[\r\n\t ]', '', names[jdx]),
+        'time': datetime.datetime.strptime(info[idx][:19], '%Y-%m-%d %H:%M:%S'),
+        'place': re.sub('[, ]', '', info[idx][21:-3]),
+        'audio_record': audio_source[idx]
+      }
+    
+      frog['time'] = datetime.datetime.strptime(info[idx][:19], '%Y-%m-%d %H:%M:%S')
+      frog['place'] = re.sub('[, ]', '', info[idx][21:-3])
+      frog['audio_record'] = audio_source[idx]
+      frog_list.append(frog)
+
+  df = pd.DataFrame(frog_list)
+  print df
+
+
 if __name__ == '__main__':
   main()
