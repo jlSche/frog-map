@@ -15,8 +15,6 @@
 
  - 其他地區之青蛙資料
  - 聲源檔處理
- - Add Code Comments
- - Add Night Mode
 
 授權
 ----
